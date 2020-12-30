@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Rutas naturales y culturales</title>
+	<meta charset="utf-8" />
+
+	<!-- Define la ubicación de Leaflet y los geoJson creados -->
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css" />
+	<script src="https://unpkg.com/leaflet@1.0.1/dist/leaflet.js" type="text/javascript"></script>
+	<script type="text/javascript" src="lugares_cult.js"></script>
+	<script type="text/javascript" src="lugares_nat.js"></script>
+
+	<!-- Define la ubicación de los plugins utilizados -->
+	<link rel="stylesheet" href="fullscreen.css" />
+	<link rel="stylesheet" href="Control.MiniMap.css" />
+	<script src="Control.MiniMap.js" type="text/javascript"></script>
+	<link rel="stylesheet" href="L.Control.MousePosition.css" />
+	<script src="L.Control.MousePosition.js" type="text/javascript"></script>
+	
+	<!-- Define los estilos de título y popups -->
+	<style>
+		.info {
+			padding: 6px 8px;
+			font: 14px/16px Arial, Helvetica, sans-serif;
+			background: white;
+			background: rgba(255,255,255,0.8);
+			box-shadow: 0 0 15px rgba(0,0,0,0.5);
+			border-radius: 5px;
+		}
+		.info h2 {
+			margin: 0 0 5px;
+			color: #DF0101;
+		}
+		.info h3 {
+			margin: 5 0 0 0px;
+			font: 11px Arial, Helvetica, sans-serif;
+			color: #424242;
+		}
+		.legend {
+			line-height: 18px;
+			color: #555;
+		}
+		.legend I {
+			width: 18px;
+			height: 18px;
+			float: left;
+			margin-right: 8px;
+			opacity: 0.7;
+		}	
+		.legend .circle {
+		  border-radius: 50%;
+		  width: 9px;
+		  height: 9px;
+		  margin-top: 4px;
+		  radius: 5,
+		  background-color:#fff;
+		  border:1px solid black;
+		  opacity: 1;		  
+		}
+	</style>
+
+</head>
+<body>
+	<div id="map" ></div>
+
+	<script type="text/javascript">
+	
+	var basemap = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+		attribution: 'Ángel Fernández Carrillo; Tiles &copy; Esri'});
+	
+	<!-- Define la variable map, estableciendo los parámetros necesarios -->
+	var map = L.map('map', {
+		center: [40.95, -3.4893056],
+		zoomControl:false,
+		zoom: 9,
+		maxZoom: 18,
+		minZoom: 7,
+		maxBounds: [[35, -7],[44, 0]],
+		layers: basemap
+		});
+
+		
+	<!-- crea varias variables y establece las capas base para el mapa -->
+	var topo = 'http://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}';
+	
+	var terrain = 'http://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}.png';
+	var terrainAttrib = 'Map tiles by <a href="http://stamen.com">Stamen Design</a>; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+	
+	var outdoors = 'http://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png';
+		
+	var osmUrl = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+	var osmAttrib = 'Map data &copy; OpenStreetMap contributors';
+	
+	var satellite = 'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+	
+	var topogra = 'http://www.ign.es/wms/primera-edicion-mtn?';
+    mtnAttrib = '<a href="http://www.ign.es/ign/main/index.do" target="_blank">© Instituto Geográfico Nacional de España</a>';
+
+	var mtn = 'http://www.ign.es/wms-inspire/mapa-raster?';
+	
+	var pnoa = 'https://www.ign.es/wms-inspire/pnoa-ma?';
+
+	var baseLayers = {
+		   "Base ESRI": L.tileLayer(topo, {minZoom: 2, maxZoom: 18}),
+		   "OpenStreetMap": L.tileLayer(osmUrl, {minZoom: 2, maxZoom: 18, attribution: osmAttrib}),
+		   "Google Satélite": L.tileLayer(satellite, {minZoom: 2, maxZoom: 18}),
+		   "Terreno": L.tileLayer(terrain, {minZoom: 2, maxZoom: 18, attribution: terrainAttrib}),
+		   "Outdoors": L.tileLayer(outdoors, {minZoom: 2, maxZoom: 18, attribution: osmAttrib}),
+		   "MTN primera ed.": L.tileLayer.wms(topogra, {layers: 'MTN50', format: 'image/png', minZoom: 2, maxZoom: 18, attribution: mtnAttrib}),
+		   "MTN actual": L.tileLayer.wms(mtn, {layers: 'mtn_rasterizado', format: 'image/png', minZoom: 2, maxZoom: 18, attribution: mtnAttrib}),
+		   "Ortofoto PNOA": L.tileLayer.wms(pnoa, {layers: 'OI.OrthoimageCoverage', format: 'image/png', minZoom: 2, maxZoom: 18, attribution: mtnAttrib}),
+       };
+	   
+	
+	function popupNat(feature, layer) {
+		//lugar
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Inicio: '+'<em>'+feature.properties.LUGAR_0+'</em>');
+		}
+		//lugares
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.LUGAR_1) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Inicio: '+'<em>'+feature.properties.LUGAR_0+'</em>'+'<br>'+'Alternativa: '+'<em>'+feature.properties.LUGAR_1+'</em>');
+		}
+		//lugar y enlace 1
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.ENLACE_1) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Inicio: '+'<em>'+feature.properties.LUGAR_0+'</em>'+'<br>Ruta: '+'<a href="'+feature.properties.ENLACE_1+'"target="_blank" rel="noopener noreferrer">Opción 1</a>');
+		}
+		//lugares y enlace 1
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.LUGAR_1 && feature.properties.ENLACE_1) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Inicio: '+'<em>'+feature.properties.LUGAR_0+'</em>'+'<br>'+'Alternativa: '+'<em>'+feature.properties.LUGAR_1+'</em>'+'<br>Ruta: '+'<a href="'+feature.properties.ENLACE_1+'"target="_blank" rel="noopener noreferrer">Opción 1</a>');
+		}
+		//lugar y enlaces 1 y 2
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.ENLACE_1 && feature.properties.ENLACE_2) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Inicio: '+'<em>'+feature.properties.LUGAR_0+'</em>'+'<br>Ruta: '+'<a href="'+feature.properties.ENLACE_1+'"target="_blank" rel="noopener noreferrer">Opción 1</a>'+', '+'<a href="'+feature.properties.ENLACE_2+'"target="_blank" rel="noopener noreferrer">Opción 2</a>');
+		}
+		//lugares y enlaces 1 y 2
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.LUGAR_1 && feature.properties.ENLACE_1 && feature.properties.ENLACE_2) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Inicio: '+'<em>'+feature.properties.LUGAR_0+'</em>'+'<br>'+'Alternativa: '+'<em>'+feature.properties.LUGAR_1+'</em>'+'<br>Ruta: '+'<a href="'+feature.properties.ENLACE_1+'"target="_blank" rel="noopener noreferrer">Opción 1</a>'+', '+'<a href="'+feature.properties.ENLACE_2+'"target="_blank" rel="noopener noreferrer">Opción 2</a>');
+		}
+		
+		//todos con más info
+		//lugar
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.INFO) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Inicio: '+'<em>'+feature.properties.LUGAR_0+'</em>'+'<br>'+'<a href="'+feature.properties.INFO+'"target="_blank" rel="noopener noreferrer">Más info</a>');
+		}
+		//lugares
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.LUGAR_1 && feature.properties.INFO) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Inicio: '+'<em>'+feature.properties.LUGAR_0+'</em>'+'<br>'+'Alternativa: '+'<em>'+feature.properties.LUGAR_1+'</em>'+'<br>'+'<a href="'+feature.properties.INFO+'"target="_blank" rel="noopener noreferrer">Más info</a>');
+		}
+		//lugar y enlace 1
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.ENLACE_1 && feature.properties.INFO) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Inicio: '+'<em>'+feature.properties.LUGAR_0+'</em>'+'<br>Ruta: '+'<a href="'+feature.properties.ENLACE_1+'"target="_blank" rel="noopener noreferrer">Opción 1</a>'+'<br>'+'<a href="'+feature.properties.INFO+'"target="_blank" rel="noopener noreferrer">Más info</a>');
+		}
+		//lugares y enlace 1
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.LUGAR_1 && feature.properties.ENLACE_1 && feature.properties.INFO) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Inicio: '+'<em>'+feature.properties.LUGAR_0+'</em>'+'<br>'+'Alternativa: '+'<em>'+feature.properties.LUGAR_1+'</em>'+'<br>Ruta: '+'<a href="'+feature.properties.ENLACE_1+'"target="_blank" rel="noopener noreferrer">Opción 1</a>'+'<br>'+'<a href="'+feature.properties.INFO+'"target="_blank" rel="noopener noreferrer">Más info</a>');
+		}
+		//lugar y enlaces 1 y 2
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.ENLACE_1 && feature.properties.ENLACE_2 && feature.properties.INFO) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Inicio: '+'<em>'+feature.properties.LUGAR_0+'</em>'+'<br>Ruta: '+'<a href="'+feature.properties.ENLACE_1+'"target="_blank" rel="noopener noreferrer">Opción 1</a>'+', '+'<a href="'+feature.properties.ENLACE_2+'"target="_blank" rel="noopener noreferrer">Opción 2</a>'+'<br>'+'<a href="'+feature.properties.INFO+'"target="_blank" rel="noopener noreferrer">Más info</a>');
+		}
+		//lugares y enlaces 1 y 2
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.LUGAR_1 && feature.properties.ENLACE_1 && feature.properties.ENLACE_2 && feature.properties.INFO) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Inicio: '+'<em>'+feature.properties.LUGAR_0+'</em>'+'<br>'+'Alternativa: '+'<em>'+feature.properties.LUGAR_1+'</em>'+'<br>Ruta: '+'<a href="'+feature.properties.ENLACE_1+'"target="_blank" rel="noopener noreferrer">Opción 1</a>'+', '+'<a href="'+feature.properties.ENLACE_2+'"target="_blank" rel="noopener noreferrer">Opción 2</a>'+'<br>'+'<a href="'+feature.properties.INFO+'"target="_blank" rel="noopener noreferrer">Más info</a>');
+		}
+		
+		//else {
+		//layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>');
+		//}
+	}
+	
+	function popupCult(feature, layer) {
+		//lugar
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Población: '+'<em>'+feature.properties.LUGAR_0+'</em>');
+		}
+		//lugares
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.LUGAR_1) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Poblaciones: '+'<em>'+feature.properties.LUGAR_0+'</em>'+', '+'<em>'+feature.properties.LUGAR_1+'</em>');
+		}
+		//lugar y enlace 1
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.ENLACE_1) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Población: '+'<em>'+feature.properties.LUGAR_0+'</em>'+'<br>Ruta: '+'<a href="'+feature.properties.ENLACE_1+'"target="_blank" rel="noopener noreferrer">Opción 1</a>');
+		}
+		//lugares y enlace 1
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.LUGAR_1 && feature.properties.ENLACE_1) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Poblaciones: '+'<em>'+feature.properties.LUGAR_0+'</em>'+', '+'<em>'+feature.properties.LUGAR_1+'</em>'+'<br>Ruta: '+'<a href="'+feature.properties.ENLACE_1+'"target="_blank" rel="noopener noreferrer">Opción 1</a>');
+		}
+		//lugar y enlaces 1 y 2
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.ENLACE_1 && feature.properties.ENLACE_2) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Población: '+'<em>'+feature.properties.LUGAR_0+'</em>'+'<br>Ruta: '+'<a href="'+feature.properties.ENLACE_1+'"target="_blank" rel="noopener noreferrer">Opción 1</a>'+', '+'<a href="'+feature.properties.ENLACE_2+'"target="_blank" rel="noopener noreferrer">Opción 2</a>');
+		}
+		//lugares y enlaces 1 y 2
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.LUGAR_1 && feature.properties.ENLACE_1 && feature.properties.ENLACE_2) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Poblaciones: '+'<em>'+feature.properties.LUGAR_0+'</em>'+', '+'<em>'+feature.properties.LUGAR_1+'</em>'+'<br>Ruta: '+'<a href="'+feature.properties.ENLACE_1+'"target="_blank" rel="noopener noreferrer">Opción 1</a>'+', '+'<a href="'+feature.properties.ENLACE_2+'"target="_blank" rel="noopener noreferrer">Opción 2</a>');
+		}
+		
+		//todos con más info
+		//lugar
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.INFO) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Población: '+'<em>'+feature.properties.LUGAR_0+'</em>'+'<br>'+'<a href="'+feature.properties.INFO+'"target="_blank" rel="noopener noreferrer">Más info</a>');
+		}
+		//lugares
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.LUGAR_1 && feature.properties.INFO) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Poblaciones: '+'<em>'+feature.properties.LUGAR_0+'</em>'+', '+'<em>'+feature.properties.LUGAR_1+'</em>'+'<br>'+'<a href="'+feature.properties.INFO+'"target="_blank" rel="noopener noreferrer">Más info</a>');
+		}
+		//lugar y enlace 1
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.ENLACE_1 && feature.properties.INFO) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Población: '+'<em>'+feature.properties.LUGAR_0+'</em>'+'<br>Ruta: '+'<a href="'+feature.properties.ENLACE_1+'"target="_blank" rel="noopener noreferrer">Opción 1</a>'+'<br>'+'<a href="'+feature.properties.INFO+'"target="_blank" rel="noopener noreferrer">Más info</a>');
+		}
+		//lugares y enlace 1
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.LUGAR_1 && feature.properties.ENLACE_1 && feature.properties.INFO) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Poblaciones: '+'<em>'+feature.properties.LUGAR_0+'</em>'+', '+'<em>'+feature.properties.LUGAR_1+'</em>'+'<br>Ruta: '+'<a href="'+feature.properties.ENLACE_1+'"target="_blank" rel="noopener noreferrer">Opción 1</a>'+'<br>'+'<a href="'+feature.properties.INFO+'"target="_blank" rel="noopener noreferrer">Más info</a>');
+		}
+		//lugar y enlaces 1 y 2
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.ENLACE_1 && feature.properties.ENLACE_2 && feature.properties.INFO) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Población: '+'<em>'+feature.properties.LUGAR_0+'</em>'+'<br>Ruta: '+'<a href="'+feature.properties.ENLACE_1+'"target="_blank" rel="noopener noreferrer">Opción 1</a>'+', '+'<a href="'+feature.properties.ENLACE_2+'"target="_blank" rel="noopener noreferrer">Opción 2</a>'+'<br>'+'<a href="'+feature.properties.INFO+'"target="_blank" rel="noopener noreferrer">Más info</a>');
+		}
+		//lugares y enlaces 1 y 2
+		if (feature.properties && feature.properties.NOMBRE && feature.properties.LUGAR_0 && feature.properties.LUGAR_1 && feature.properties.ENLACE_1 && feature.properties.ENLACE_2 && feature.properties.INFO) {
+		layer.bindPopup('<strong>'+feature.properties.NOMBRE+'</strong>'+'<br>'+'Poblaciones: '+'<em>'+feature.properties.LUGAR_0+'</em>'+', '+'<em>'+feature.properties.LUGAR_1+'</em>'+'<br>Ruta: '+'<a href="'+feature.properties.ENLACE_1+'"target="_blank" rel="noopener noreferrer">Opción 1</a>'+', '+'<a href="'+feature.properties.ENLACE_2+'"target="_blank" rel="noopener noreferrer">Opción 2</a>'+'<br>'+'<a href="'+feature.properties.INFO+'"target="_blank" rel="noopener noreferrer">Más info</a>');
+		}
+	}
+	
+	var markerCult = {
+		radius: 5,
+		fillColor: "#F3F781",
+		color: "#000",
+		weight: 1,
+		opacity: 1,
+		fillOpacity: 1
+	};
+
+	var lugares_cult = L.geoJson(lugares_cult, {onEachFeature: popupCult,
+		pointToLayer: function (feature, latlng) {
+        return L.circleMarker(latlng, markerCult);
+		}
+	}).addTo(map);
+	
+		var markerNat = {
+		radius: 5,
+		fillColor: "#ff7800",
+		color: "#000",
+		weight: 1,
+		opacity: 1,
+		fillOpacity: 1
+	};
+
+	var lugares_nat = L.geoJson(lugares_nat, {onEachFeature: popupNat,
+		pointToLayer: function (feature, latlng) {
+        return L.circleMarker(latlng, markerNat);
+		}
+	}).addTo(map);
+	
+	var overlays = {
+		"Rutas naturales": lugares_nat,
+		"Rutas culturales": lugares_cult,
+		};
+	L.control.layers(baseLayers, overlays,{collapsed:true}).addTo(map);
+	
+	<!-- Define nuevos elementos que aparecerán en el mapa (control de posición del ratón y escala -->
+	new L.control.mousePosition().addTo(map);
+	new L.control.scale().addTo(map);
+	
+	<!-- Define y añade el minimapa -->
+	var osm2 = new L.TileLayer(osmUrl, {minZoom: 0, maxZoom: 13, attribution: osmAttrib });
+	var miniMap = new L.Control.MiniMap(osm2, { toggleDisplay: true }).addTo(map);
+	
+	var title = L.control({position: 'topleft'});
+
+	<!-- Define el título y lo añade al mapa -->
+	title.onAdd = function (map) {
+		var div = L.DomUtil.create('div', 'info');
+		
+		div.innerHTML += '<h2>Rutas naturales y culturales</h2>por Madrid, Guadalajara y Segovia<h3>Ángel Fernández Carrillo, 2021</h3>';
+		return div;
+	};
+	
+	title.addTo(map);
+
+
+	<!-- Define la leyenda y la añade al mapa -->	
+	function getColor(d) {
+			return d === 'Rutas naturales'  ? "#ff7800" :
+				   d === 'Rutas culturales'  ? "#F3F781" :
+								"#C0C0C0";
+		}
+
+		function style(feature) {
+			return {
+				weight: 1.5,
+				opacity: 1,
+				fillOpacity: 1,
+				radius: 6,
+				fillColor: getColor(feature.properties.TypeOfIssue),
+				color: "grey"
+
+			};
+		}
+
+	var legend = L.control({position: 'bottomright'});
+	legend.onAdd = function (map) {
+
+	var div = L.DomUtil.create('div', 'info legend');
+	labels = ['<strong>Categorías</strong>'],
+	categories = ['Rutas naturales','Rutas culturales','Otras'];
+
+	for (var i = 0; i < categories.length; i++) {
+			div.innerHTML += 
+			labels.push(
+				'<i class="circle" style="background:' + getColor(categories[i]) + '"></i> ' +
+			(categories[i] ? categories[i] : '+'));	
+		}
+		div.innerHTML = labels.join('<br>');
+	return div;
+	};
+	legend.addTo(map);
+
+	<!-- Añade el control de zoom -->
+	new L.Control.Zoom({ position: 'topleft'}).addTo(map);
+	
+	</script>
+</body>
+</html>
