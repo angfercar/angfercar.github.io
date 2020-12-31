@@ -103,13 +103,12 @@
 
 	var baseLayers = {
 		   "Base ESRI": L.tileLayer(topo, {minZoom: 2, maxZoom: 18}),
+		   "Satélite": L.tileLayer(satellite, {minZoom: 2, maxZoom: 18}),
+		   "Topográfico actual": L.tileLayer.wms(mtn, {layers: 'mtn_rasterizado', format: 'image/png', minZoom: 2, maxZoom: 18, attribution: mtnAttrib}),
+		   "Topográfico antiguo": L.tileLayer.wms(topogra, {layers: 'MTN50', format: 'image/png', minZoom: 2, maxZoom: 18, attribution: mtnAttrib}),
 		   "OpenStreetMap": L.tileLayer(osmUrl, {minZoom: 2, maxZoom: 18, attribution: osmAttrib}),
-		   "Google Satélite": L.tileLayer(satellite, {minZoom: 2, maxZoom: 18}),
-		   "Terreno": L.tileLayer(terrain, {minZoom: 2, maxZoom: 18, attribution: terrainAttrib}),
 		   "Outdoors": L.tileLayer(outdoors, {minZoom: 2, maxZoom: 18, attribution: osmAttrib}),
-		   "MTN primera ed.": L.tileLayer.wms(topogra, {layers: 'MTN50', format: 'image/png', minZoom: 2, maxZoom: 18, attribution: mtnAttrib}),
-		   "MTN actual": L.tileLayer.wms(mtn, {layers: 'mtn_rasterizado', format: 'image/png', minZoom: 2, maxZoom: 18, attribution: mtnAttrib}),
-		   "Ortofoto PNOA": L.tileLayer.wms(pnoa, {layers: 'OI.OrthoimageCoverage', format: 'image/png', minZoom: 2, maxZoom: 18, attribution: mtnAttrib}),
+		   "Ortofotos PNOA": L.tileLayer.wms(pnoa, {layers: 'OI.OrthoimageCoverage', format: 'image/png', minZoom: 2, maxZoom: 18, attribution: mtnAttrib}),
        };
 	   
 	
@@ -273,7 +272,7 @@
 	title.onAdd = function (map) {
 		var div = L.DomUtil.create('div', 'info');
 		
-		div.innerHTML += '<h2>Rutas naturales y culturales</h2>por Madrid, Guadalajara y Segovia<h3>Ángel Fernández Carrillo, 2021</h3>';
+		div.innerHTML += '<h2>Rutas naturales y culturales</h2>por Guadalajara, Madrid y Castilla<h3>Ángel Fernández Carrillo, 2021</h3>';
 		return div;
 	};
 	
