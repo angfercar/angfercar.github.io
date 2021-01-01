@@ -17,6 +17,8 @@
 	<link rel="stylesheet" href="L.Control.MousePosition.css" />
 	<script src="L.Control.MousePosition.js" type="text/javascript"></script>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<script src="leaflet-search-master\src\leaflet-search.js"></script>
+	<link rel="stylesheet" href="leaflet-search-master\src\leaflet-search.css" />
 	
 	<!-- Define los estilos de título y popups -->
 	<style>
@@ -262,10 +264,6 @@
 	new L.control.mousePosition().addTo(map);
 	new L.control.scale().addTo(map);
 	
-	<!-- Define y añade el minimapa -->
-	var osm2 = new L.TileLayer(osmUrl, {minZoom: 0, maxZoom: 13, attribution: osmAttrib });
-	var miniMap = new L.Control.MiniMap(osm2, { toggleDisplay: true }).addTo(map);
-	
 	var title = L.control({position: 'topleft'});
 
 	<!-- Define el título y lo añade al mapa -->
@@ -315,6 +313,20 @@
 	return div;
 	};
 	legend.addTo(map);
+	
+	<!-- Define y añade el minimapa -->
+	var osm2 = new L.TileLayer(osmUrl, {minZoom: 0, maxZoom: 13, attribution: osmAttrib });
+	var miniMap = new L.Control.MiniMap(osm2, {toggleDisplay: true, position:'bottomright'}).addTo(map);
+	
+	// control de búsqueda
+	var searchControl = new L.Control.Search({
+		   layer: L.featureGroup([lugares_nat, lugares_cult]),
+		   propertyName: 'NOMBRE',
+		   circleLocation: true,
+		   position: 'topleft',
+	});
+	
+	map.addControl(searchControl);
 
 	<!-- Añade el control de zoom -->
 	new L.Control.Zoom({ position: 'topleft'}).addTo(map);
