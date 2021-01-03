@@ -331,12 +331,13 @@
 	var searchControl = new L.Control.Search({
 		   layer: L.featureGroup([lugares_nat, lugares_cult]),
 		   propertyName: 'NOMBRE',
+		   textPlaceholder:'Buscar ruta...',
 		   circleLocation: true,
 		   position: 'topleft',
 	});
 	
 	map.addControl(searchControl);
-
+	
 	<!-- Añade el control de zoom -->
 	new L.Control.Zoom({ position: 'topleft'}).addTo(map);
 	
